@@ -1,4 +1,4 @@
-package ca.gbc.microserviceproduct.repository;
+package ca.gbc.productservice.repository;
 
 import ca.gbc.productservice.model.Product;
 import org.springframework.data.mongodb.repository.DeleteQuery;

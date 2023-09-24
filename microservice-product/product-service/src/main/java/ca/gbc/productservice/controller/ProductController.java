@@ -1,5 +1,5 @@
 //
-package ca.gbc.microserviceproduct.controller;
+package ca.gbc.productservice.controller;
 
 import ca.gbc.productservice.dto.ProductRequest;
 import ca.gbc.productservice.dto.ProductResponse;

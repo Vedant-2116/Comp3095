@@ -1,5 +1,5 @@
 
-package ca.gbc.microserviceproduct.model;
+package ca.gbc.productservice.model;
 
 
 import lombok.AllArgsConstructor;
