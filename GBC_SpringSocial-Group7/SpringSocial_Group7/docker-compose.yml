@@ -1,0 +1,231 @@
+version: '3.9'
+
+services:
+
+  api-gateway:
+    image: api-gateway
+    ports:
+      - "8181:8181"
+    build:
+      context: api-gateway
+      dockerfile: api-gateway/Dockerfile
+    container_name: api-gateway
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - discovery-service
+    networks:
+      - spring
+
+  discovery-service:
+    image: discovery-service
+    ports:
+      - "8761:8761"
+    build:
+      context: discovery-service
+      dockerfile: discovery-service/Dockerfile
+    container_name: discovery-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - spring
+
+  user:
+    image: user-service
+    ports:
+      - "8084:8084"
+    build:
+      context: user
+      dockerfile: user/Dockerfile
+    container_name: user-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    restart: unless-stopped
+    depends_on:
+      - discovery-service
+      - postgres-user
+    networks:
+      - spring
+
+  post:
+    image: post-service
+    ports:
+      - "8083:8083"
+    build:
+      context: post
+      dockerfile: post/Dockerfile
+    container_name: post-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - discovery-service
+      - postgres-post
+    networks:
+      - spring
+
+  comment:
+    image: comment-service
+    ports:
+      - "8082:8082"
+    build:
+      context: comment
+      dockerfile: comment/Dockerfile
+    container_name: comment-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - discovery-service
+      - postgres-comment
+    networks:
+      - spring
+
+  friendship:
+    image: friendship-service
+    ports:
+      - "8085:8085"
+    build:
+      context: friendship
+      dockerfile: friendship/Dockerfile
+    container_name: friendship-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    restart: unless-stopped
+    depends_on:
+      - discovery-service
+      - postgres-friendship
+    networks:
+      - spring
+
+
+  keycloak:
+    image: jboss/keycloak
+    ports:
+      - "8080:8080"
+    container_name: keycloak-lab
+    environment:
+      JBOSS_LOG_MANAGER_ROOT_LOGGER: DEBUG
+      DB_VENDOR: postgres
+      DB_ADDR: postgres-keycloak
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_PASSWORD: password
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: password
+      KEYCLOAK_IMPORT: /opt/jboss/keycloak/realms/spring-social-realm.json
+    volumes:
+      - ./realms/:/opt/jboss/keycloak/realms
+    restart: unless-stopped
+    depends_on:
+      - postgres-keycloak
+    networks:
+      - spring
+
+  zipkin:
+    container_name: zipkin-local-lab
+    image: openzipkin/zipkin:latest
+    restart: unless-stopped
+    ports:
+      - "9411:9411"
+    networks:
+      - spring
+
+  postgres-keycloak:
+    container_name: postgres-keycloak
+    image: postgres
+    ports:
+      - "5431:5432"
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+      PGDATA: /data/postgres
+    volumes:
+      - ./data/postgres/postgres/postgres-keycloak:/data/postgres
+    restart: unless-stopped
+    networks:
+      - spring
+
+  postgres-post:
+    image: postgres
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=post
+    volumes:
+      - ./data/postgres/post:/data/postgres
+      - ./init/postgres/post/init.sql:/docker-entrypoint-initdb.d/init.sql
+    container_name: postgres-post
+    restart: unless-stopped
+    networks:
+      - spring
+
+  postgres-comment:
+    image: postgres
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=comment
+    volumes:
+      - ./data/postgres/comment:/data/postgres
+      - ./init/postgres/comment/init.sql:/docker-entrypoint-initdb.d/init.sql
+    container_name: postgres-comment
+    restart: unless-stopped
+    networks:
+      - spring
+
+  postgres-friendship:
+    image: postgres
+    ports:
+      - "5435:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=friendship
+    volumes:
+      - ./data/postgres/friendship:/data/postgres
+      - ./init/postgres/friendship/init.sql:/docker-entrypoint-initdb.d/init.sql
+    container_name: postgres-friendship
+    restart: unless-stopped
+    networks:
+      - spring
+
+  postgres-user:
+    image: postgres
+    ports:
+      - "5436:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=user
+    volumes:
+      - ./data/postgres/user:/data/postgres
+      - ./init/postgres/user/init.sql:/docker-entrypoint-initdb.d/init.sql
+    container_name: postgres-user
+    restart: unless-stopped
+    networks:
+      - spring
+
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "8888:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=user@domain.ca
+      - PGADMIN_DEFAULT_PASSWORD=password
+    container_name: pgadmin-order-gbc
+    restart: unless-stopped
+    networks:
+      - spring
+
+networks:
+  spring:
+    driver: bridge
+
